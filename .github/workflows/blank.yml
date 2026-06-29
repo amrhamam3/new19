@@ -35,17 +35,25 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
-      - name: Decode Keystore
+      - name: Generate Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/amr3d.keystore
+          keytool -genkey -v \
+            -keystore app/amr3d.keystore \
+            -alias amr3d \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass amr3d2026 \
+            -keypass amr3d2026 \
+            -dname "CN=AmrHamam, OU=3D, O=Amr3D, L=Cairo, ST=Cairo, C=EG"
 
       - name: Build Signed Release APK
-        run: |
-          ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=$PWD/app/amr3d.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        env:
+          KEYSTORE_PATH: amr3d.keystore
+          STORE_PASSWORD: amr3d2026
+          KEY_ALIAS: amr3d
+          KEY_PASSWORD: amr3d2026
+        run: ./gradlew assembleRelease
 
       - name: Get version
         id: ver
@@ -53,7 +61,7 @@ jobs:
           V=$(grep versionName app/build.gradle | head -1 | awk -F'"' '{print $2}')
           echo "version=$V" >> $GITHUB_OUTPUT
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Amr3DPreview-Pro-v${{ steps.ver.outputs.version }}
@@ -67,14 +75,9 @@ jobs:
           name: "🎮 Amr3DPreview Pro v${{ steps.ver.outputs.version }}"
           body: |
             ## ✅ APK جاهز للتثبيت المباشر
-
             - بناء رقم: #${{ github.run_number }}
             - موقّع ومجهز للتوزيع
-            - يدعم Android 7.0+
-
-            **التثبيت:** حمّل الـ APK وثبّته مباشرة
+            - Android 7.0+
           files: app/build/outputs/apk/release/*.apk
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

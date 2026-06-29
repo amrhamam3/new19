@@ -23,6 +23,7 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         // Fullscreen — إخفاء nav bar و status bar تماماً
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -48,19 +49,26 @@ class SplashActivity : AppCompatActivity() {
         // لو من الأيقونة: عرض الـ Splash كامل
         setContentView(R.layout.activity_splash)
 
+        // تعريف جميع العناصر البرمجية من الواجهة لضمان سلامة البناء
         val logo = findViewById<ImageView>(R.id.splashLogo)
         val titleText = findViewById<TextView>(R.id.splashTitle)
         val devText = findViewById<TextView>(R.id.splashDev)
         val progressBar = findViewById<ProgressBar>(R.id.splashProgress)
+        val percentText = findViewById<TextView>(R.id.splashPercent)
         val glowLine = findViewById<View>(R.id.splashGlowLine)
+        val wireframeBg = findViewById<WireframeBackgroundView>(R.id.wireframeBg)
 
-        // كل العناصر شفافة في البداية
-        listOf(logo, titleText, devText, progressBar, glowLine).forEach {
+        // إخفاء كل العناصر في البداية وتجهيز مواضعها للانيميشن الجديد
+        listOf(logo, titleText, devText, progressBar, percentText, glowLine).forEach {
             it.alpha = 0f
         }
         logo.scaleX = 0.5f; logo.scaleY = 0.5f
         titleText.translationY = 50f
         devText.translationY = 40f
+        glowLine.scaleX = 0f
+
+        // تشغيل الخلفية السلكية كما في الكود الأصلي
+        wireframeBg.fadeIn()
 
         // اللوجو - Neon flash entrance
         AnimatorSet().apply {
@@ -94,7 +102,7 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // النصوص
+        // النصوص (العنوان)
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f).setDuration(600),
@@ -104,6 +112,8 @@ class SplashActivity : AppCompatActivity() {
             startDelay = 1200
             start()
         }
+        
+        // النصوص (المطور)
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofFloat(devText, "alpha", 0f, 1f).setDuration(500),
@@ -114,29 +124,44 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // Progress Bar
-        ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).apply {
-            duration = 300; startDelay = 1800; start()
+        // إظهار Progress Bar ونص النسبة المئوية معاً
+        AnimatorSet().apply {
+            playTogether(
+                ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).setDuration(300),
+                ObjectAnimator.ofFloat(percentText, "alpha", 0f, 1f).setDuration(300)
+            )
+            startDelay = 1800
+            start()
         }
+
+        // تحريك الـ Progress وعرض النسبة المئوية تصاعدياً
         ValueAnimator.ofInt(0, 100).apply {
             duration = SPLASH_DURATION - 500
             startDelay = 1800
             interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener { progressBar.progress = it.animatedValue as Int }
+            addUpdateListener { animator ->
+                val value = animator.animatedValue as Int
+                progressBar.progress = value
+                percentText.text = "$value%"
+            }
             start()
         }
 
-        // Neon pulse على شريط التحميل
+        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً
         ValueAnimator.ofFloat(0.7f, 1f).apply {
             duration = 800
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.REVERSE
-            addUpdateListener { progressBar.alpha = it.animatedValue as Float }
+            addUpdateListener { animator ->
+                val alphaValue = animator.animatedValue as Float
+                progressBar.alpha = alphaValue
+                percentText.alpha = alphaValue
+            }
             startDelay = 2000
             start()
         }
 
-        // انتقل للـ MainActivity بعد 5 ثواني
+        // انتقل للـ MainActivity بعد انتهاء المهلة (5 ثواني) مع تأثير الإخفاء التدريجي للـ Root View
         Handler(Looper.getMainLooper()).postDelayed({
             val rootView = findViewById<View>(android.R.id.content)
             ObjectAnimator.ofFloat(rootView, "alpha", 1f, 0f).apply {

@@ -4,23 +4,17 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 
 class SplashActivity : AppCompatActivity() {
 
@@ -28,33 +22,8 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Fullscreen — إخفاء nav bar و status bar تماماً
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-
-        // لو التطبيق اتفتح من واتساب أو مدير ملفات (ACTION_VIEW)
-        // ادخل على MainActivity مباشرة بدون Splash
-        if (intent?.action == Intent.ACTION_VIEW && intent?.data != null) {
-            val fileUri = intent.data
-            val mainIntent = Intent(this, MainActivity::class.java).apply {
-                action = Intent.ACTION_VIEW
-                data = fileUri
-                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            }
-            startActivity(mainIntent)
-            finish()
-            return
-        }
-
-        // لو من الأيقونة: عرض الـ Splash كامل
         setContentView(R.layout.activity_splash)
 
-        // تعريف جميع العناصر البرمجية من الواجهة لضمان سلامة البناء
         val logo = findViewById<ImageView>(R.id.splashLogo)
         val titleText = findViewById<TextView>(R.id.splashTitle)
         val devText = findViewById<TextView>(R.id.splashDev)
@@ -63,122 +32,86 @@ class SplashActivity : AppCompatActivity() {
         val glowLine = findViewById<View>(R.id.splashGlowLine)
         val wireframeBg = findViewById<WireframeBackgroundView>(R.id.wireframeBg)
 
-        // إخفاء كل العناصر في البداية وتجهيز مواضعها للانيميشن الجديد
-        listOf(logo, titleText, devText, progressBar, percentText, glowLine).forEach {
-            it.alpha = 0f
-        }
-        logo.scaleX = 0.5f; logo.scaleY = 0.5f
-        titleText.translationY = 50f
-        devText.translationY = 40f
+        logo.alpha = 0f
+        logo.scaleX = 0.3f
+        logo.scaleY = 0.3f
+        logo.translationY = 60f
+        titleText.alpha = 0f
+        titleText.translationY = 40f
+        devText.alpha = 0f
+        devText.translationY = 30f
+        progressBar.alpha = 0f
+        percentText.alpha = 0f
         glowLine.scaleX = 0f
 
-        // تشغيل الخلفية السلكية كما في الكود الأصلي
         wireframeBg.fadeIn()
 
-        // اللوجو - Neon flash entrance
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(logo, "alpha", 0f, 1.2f, 1f).setDuration(1000),
-                ObjectAnimator.ofFloat(logo, "scaleX", 0.5f, 1.08f, 1f).setDuration(1000),
-                ObjectAnimator.ofFloat(logo, "scaleY", 0.5f, 1.08f, 1f).setDuration(1000)
+                ObjectAnimator.ofFloat(logo, "alpha", 0f, 1f).setDuration(900),
+                ObjectAnimator.ofFloat(logo, "scaleX", 0.3f, 1f).setDuration(1000),
+                ObjectAnimator.ofFloat(logo, "scaleY", 0.3f, 1f).setDuration(1000),
+                ObjectAnimator.ofFloat(logo, "translationY", 60f, 0f).setDuration(900)
             )
-            interpolator = DecelerateInterpolator(2.5f)
+            interpolator = OvershootInterpolator(1.5f)
             startDelay = 300
-            start()
-        }
+        }.start()
 
-        // Neon glow pulse على اللوجو
-        Handler(Looper.getMainLooper()).postDelayed({
-            ObjectAnimator.ofFloat(logo, "alpha", 1f, 0.7f, 1f, 0.85f, 1f).apply {
-                duration = 600
-                interpolator = AccelerateDecelerateInterpolator()
-                start()
-            }
-        }, 1000)
-
-        // الخط النيون
-        ObjectAnimator.ofFloat(glowLine, "alpha", 0f, 1f).apply {
-            duration = 400; startDelay = 900; start()
-        }
         ObjectAnimator.ofFloat(glowLine, "scaleX", 0f, 1f).apply {
-            duration = 500
-            startDelay = 900
+            duration = 600
             interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }
+            startDelay = 1100
+        }.start()
 
-        // النصوص (العنوان)
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f).setDuration(600),
-                ObjectAnimator.ofFloat(titleText, "translationY", 50f, 0f).setDuration(600)
+                ObjectAnimator.ofFloat(titleText, "translationY", 40f, 0f).setDuration(600)
             )
-            interpolator = OvershootInterpolator(1.5f)
-            startDelay = 1200
-            start()
-        }
-        
-        // النصوص (المطور)
+            interpolator = OvershootInterpolator(1.2f)
+            startDelay = 1300
+        }.start()
+
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(devText, "alpha", 0f, 1f).setDuration(500),
-                ObjectAnimator.ofFloat(devText, "translationY", 40f, 0f).setDuration(500)
+                ObjectAnimator.ofFloat(devText, "alpha", 0f, 1f).setDuration(600),
+                ObjectAnimator.ofFloat(devText, "translationY", 30f, 0f).setDuration(600)
             )
             interpolator = DecelerateInterpolator()
-            startDelay = 1600
-            start()
-        }
+            startDelay = 1700
+        }.start()
 
-        // إظهار Progress Bar ونص النسبة المئوية معاً
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).setDuration(300),
-                ObjectAnimator.ofFloat(percentText, "alpha", 0f, 1f).setDuration(300)
+                ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).setDuration(400),
+                ObjectAnimator.ofFloat(percentText, "alpha", 0f, 1f).setDuration(400)
             )
-            startDelay = 1800
-            start()
-        }
+            startDelay = 2000
+        }.start()
 
-        // تحريك الـ Progress وعرض النسبة المئوية تصاعدياً
         ValueAnimator.ofInt(0, 100).apply {
-            duration = SPLASH_DURATION - 500
-            startDelay = 1800
+            duration = SPLASH_DURATION - 600
+            startDelay = 2000
             interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { animator ->
                 val value = animator.animatedValue as Int
                 progressBar.progress = value
                 percentText.text = "$value%"
             }
-            start()
-        }
+        }.start()
 
-        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً
-        ValueAnimator.ofFloat(0.7f, 1f).apply {
-            duration = 800
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            addUpdateListener { animator ->
-                val alphaValue = animator.animatedValue as Float
-                progressBar.alpha = alphaValue
-                percentText.alpha = alphaValue
-            }
-            startDelay = 2000
-            start()
-        }
-
-        // انتقل للـ MainActivity بعد انتهاء المهلة (5 ثواني) مع تأثير الإخفاء التدريجي للـ Root View
         Handler(Looper.getMainLooper()).postDelayed({
             val rootView = findViewById<View>(android.R.id.content)
             ObjectAnimator.ofFloat(rootView, "alpha", 1f, 0f).apply {
-                duration = 500
-                interpolator = AccelerateInterpolator()
+                duration = 400
+                interpolator = AccelerateDecelerateInterpolator()
                 start()
             }
             Handler(Looper.getMainLooper()).postDelayed({
                 startActivity(Intent(this, MainActivity::class.java))
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 finish()
-            }, 500)
+            }, 400)
         }, SPLASH_DURATION)
     }
 }

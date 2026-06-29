@@ -31,7 +31,8 @@ class SplashActivity : AppCompatActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-        // لو التطبيق اتفتح من واتساب أو مدير ملفات
+        // لو التطبيق اتفتح من واتساب أو مدير ملفات (ACTION_VIEW)
+        // ادخل على MainActivity مباشرة بدون Splash
         if (intent?.action == Intent.ACTION_VIEW && intent?.data != null) {
             val fileUri = intent.data
             val mainIntent = Intent(this, MainActivity::class.java).apply {
@@ -44,101 +45,110 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
+        // لو من الأيقونة: عرض الـ Splash كامل
         setContentView(R.layout.activity_splash)
 
         val logo = findViewById<ImageView>(R.id.splashLogo)
         val titleText = findViewById<TextView>(R.id.splashTitle)
         val devText = findViewById<TextView>(R.id.splashDev)
         val progressBar = findViewById<ProgressBar>(R.id.splashProgress)
-        val percentText = findViewById<TextView>(R.id.splashPercent)
         val glowLine = findViewById<View>(R.id.splashGlowLine)
-        val wireframeBg = findViewById<WireframeBackgroundView>(R.id.wireframeBg)
 
-        // القيم الابتدائية
-        logo.alpha = 0f
-        logo.scaleX = 1.5f  // يبدأ كبير
-        logo.scaleY = 1.5f  // يبدأ كبير
-        logo.translationY = 0f // مش محتاجين حركة لفوق هنا
-        titleText.alpha = 0f
-        titleText.translationY = 40f
-        devText.alpha = 0f
-        devText.translationY = 30f
-        progressBar.alpha = 0f
-        percentText.alpha = 0f
-        glowLine.scaleX = 0f
+        // كل العناصر شفافة في البداية
+        listOf(logo, titleText, devText, progressBar, glowLine).forEach {
+            it.alpha = 0f
+        }
+        logo.scaleX = 0.5f; logo.scaleY = 0.5f
+        titleText.translationY = 50f
+        devText.translationY = 40f
 
-        wireframeBg.fadeIn()
-
-        // اللوجو - Cinematic Zoom Out
+        // اللوجو - Neon flash entrance
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(logo, "alpha", 0f, 1f).setDuration(600),
-                ObjectAnimator.ofFloat(logo, "scaleX", 1.5f, 1f).setDuration(1000),
-                ObjectAnimator.ofFloat(logo, "scaleY", 1.5f, 1f).setDuration(1000)
+                ObjectAnimator.ofFloat(logo, "alpha", 0f, 1.2f, 1f).setDuration(1000),
+                ObjectAnimator.ofFloat(logo, "scaleX", 0.5f, 1.08f, 1f).setDuration(1000),
+                ObjectAnimator.ofFloat(logo, "scaleY", 0.5f, 1.08f, 1f).setDuration(1000)
             )
-            interpolator = DecelerateInterpolator(2f) // حركة ناعمة في الآخر
+            interpolator = DecelerateInterpolator(2.5f)
             startDelay = 300
-        }.start()
+            start()
+        }
+
+        // Neon glow pulse على اللوجو
+        Handler(Looper.getMainLooper()).postDelayed({
+            ObjectAnimator.ofFloat(logo, "alpha", 1f, 0.7f, 1f, 0.85f, 1f).apply {
+                duration = 600
+                interpolator = AccelerateDecelerateInterpolator()
+                start()
+            }
+        }, 1000)
 
         // الخط النيون
+        ObjectAnimator.ofFloat(glowLine, "alpha", 0f, 1f).apply {
+            duration = 400; startDelay = 900; start()
+        }
         ObjectAnimator.ofFloat(glowLine, "scaleX", 0f, 1f).apply {
-            duration = 600
+            duration = 500
+            startDelay = 900
             interpolator = AccelerateDecelerateInterpolator()
-            startDelay = 1100
-        }.start()
+            start()
+        }
 
         // النصوص
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f).setDuration(600),
-                ObjectAnimator.ofFloat(titleText, "translationY", 40f, 0f).setDuration(600)
+                ObjectAnimator.ofFloat(titleText, "translationY", 50f, 0f).setDuration(600)
             )
-            interpolator = OvershootInterpolator(1.2f)
-            startDelay = 1300
-        }.start()
-
+            interpolator = OvershootInterpolator(1.5f)
+            startDelay = 1200
+            start()
+        }
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(devText, "alpha", 0f, 1f).setDuration(600),
-                ObjectAnimator.ofFloat(devText, "translationY", 30f, 0f).setDuration(600)
+                ObjectAnimator.ofFloat(devText, "alpha", 0f, 1f).setDuration(500),
+                ObjectAnimator.ofFloat(devText, "translationY", 40f, 0f).setDuration(500)
             )
             interpolator = DecelerateInterpolator()
-            startDelay = 1700
-        }.start()
+            startDelay = 1600
+            start()
+        }
 
-        // Progress Bar + النسبة المئوية
-        AnimatorSet().apply {
-            playTogether(
-                ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).setDuration(400),
-                ObjectAnimator.ofFloat(percentText, "alpha", 0f, 1f).setDuration(400)
-            )
-            startDelay = 2000
-        }.start()
-
+        // Progress Bar
+        ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f).apply {
+            duration = 300; startDelay = 1800; start()
+        }
         ValueAnimator.ofInt(0, 100).apply {
-            duration = SPLASH_DURATION - 600
-            startDelay = 2000
+            duration = SPLASH_DURATION - 500
+            startDelay = 1800
             interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener { animator ->
-                val value = animator.animatedValue as Int
-                progressBar.progress = value
-                percentText.text = "$value%"
-            }
-        }.start()
+            addUpdateListener { progressBar.progress = it.animatedValue as Int }
+            start()
+        }
 
-        // الخروج
+        // Neon pulse على شريط التحميل
+        ValueAnimator.ofFloat(0.7f, 1f).apply {
+            duration = 800
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            addUpdateListener { progressBar.alpha = it.animatedValue as Float }
+            startDelay = 2000
+            start()
+        }
+
+        // انتقل للـ MainActivity بعد 5 ثواني
         Handler(Looper.getMainLooper()).postDelayed({
             val rootView = findViewById<View>(android.R.id.content)
             ObjectAnimator.ofFloat(rootView, "alpha", 1f, 0f).apply {
-                duration = 400
-                interpolator = AccelerateDecelerateInterpolator()
+                duration = 500
+                interpolator = AccelerateInterpolator()
                 start()
             }
             Handler(Looper.getMainLooper()).postDelayed({
                 startActivity(Intent(this, MainActivity::class.java))
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 finish()
-            }, 400)
+            }, 500)
         }, SPLASH_DURATION)
     }
 }

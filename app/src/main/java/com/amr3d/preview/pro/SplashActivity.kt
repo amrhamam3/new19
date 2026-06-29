@@ -46,10 +46,10 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
-        // لو من الأيقونة: عرض الـ Splash كامل
+        // عرض الـ Splash كامل
         setContentView(R.layout.activity_splash)
 
-        // تعريف جميع العناصر البرمجية من الواجهة لضمان سلامة البناء
+        // تعريف العناصر البرمجية
         val logo = findViewById<ImageView>(R.id.splashLogo)
         val titleText = findViewById<TextView>(R.id.splashTitle)
         val devText = findViewById<TextView>(R.id.splashDev)
@@ -58,16 +58,24 @@ class SplashActivity : AppCompatActivity() {
         val glowLine = findViewById<View>(R.id.splashGlowLine)
         val wireframeBg = findViewById<WireframeBackgroundView>(R.id.wireframeBg)
 
-        // إخفاء كل العناصر في البداية وتجهيز مواضعها للانيميشن الجديد
-        listOf(logo, titleText, devText, progressBar, percentText, glowLine).forEach {
-            it.alpha = 0f
-        }
-        logo.scaleX = 0.5f; logo.scaleY = 0.5f
+        // إخفاء كل العناصر وتجهيز مواضعها للانيميشن الجديد
+        logo.alpha = 0f
+        logo.scaleX = 0.5f
+        logo.scaleY = 0.5f
+        
+        titleText.alpha = 0f
         titleText.translationY = 50f
+        
+        devText.alpha = 0f
         devText.translationY = 40f
+        
+        progressBar.alpha = 0f
+        percentText.alpha = 0f
+        
+        glowLine.alpha = 0f
         glowLine.scaleX = 0f
 
-        // تشغيل الخلفية السلكية كما في الكود الأصلي
+        // تشغيل الخلفية السلكية كما في الكود الأصلي الأول
         wireframeBg.fadeIn()
 
         // اللوجو - Neon flash entrance
@@ -93,7 +101,9 @@ class SplashActivity : AppCompatActivity() {
 
         // الخط النيون
         ObjectAnimator.ofFloat(glowLine, "alpha", 0f, 1f).apply {
-            duration = 400; startDelay = 900; start()
+            duration = 400
+            startDelay = 900
+            start()
         }
         ObjectAnimator.ofFloat(glowLine, "scaleX", 0f, 1f).apply {
             duration = 500
@@ -147,7 +157,7 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً
+        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً بشكل منفصل وآمن
         ValueAnimator.ofFloat(0.7f, 1f).apply {
             duration = 800
             repeatCount = ValueAnimator.INFINITE
@@ -161,7 +171,7 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // انتقل للـ MainActivity بعد انتهاء المهلة (5 ثواني) مع تأثير الإخفاء التدريجي للـ Root View
+        // انتقال إلى الـ MainActivity بعد 5 ثواني
         Handler(Looper.getMainLooper()).postDelayed({
             val rootView = findViewById<View>(android.R.id.content)
             ObjectAnimator.ofFloat(rootView, "alpha", 1f, 0f).apply {

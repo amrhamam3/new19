@@ -1,17 +1,22 @@
 package com.amr3d.preview.pro
 
-import android.animation.*
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import android.view.animation.*
+import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -46,10 +51,10 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
-        // عرض الـ Splash كامل
+        // لو من الأيقونة: عرض الـ Splash كامل
         setContentView(R.layout.activity_splash)
 
-        // تعريف العناصر البرمجية
+        // تعريف جميع العناصر البرمجية من الواجهة لضمان سلامة البناء
         val logo = findViewById<ImageView>(R.id.splashLogo)
         val titleText = findViewById<TextView>(R.id.splashTitle)
         val devText = findViewById<TextView>(R.id.splashDev)
@@ -58,24 +63,16 @@ class SplashActivity : AppCompatActivity() {
         val glowLine = findViewById<View>(R.id.splashGlowLine)
         val wireframeBg = findViewById<WireframeBackgroundView>(R.id.wireframeBg)
 
-        // إخفاء كل العناصر وتجهيز مواضعها للانيميشن الجديد
-        logo.alpha = 0f
-        logo.scaleX = 0.5f
-        logo.scaleY = 0.5f
-        
-        titleText.alpha = 0f
+        // إخفاء كل العناصر في البداية وتجهيز مواضعها للانيميشن الجديد
+        listOf(logo, titleText, devText, progressBar, percentText, glowLine).forEach {
+            it.alpha = 0f
+        }
+        logo.scaleX = 0.5f; logo.scaleY = 0.5f
         titleText.translationY = 50f
-        
-        devText.alpha = 0f
         devText.translationY = 40f
-        
-        progressBar.alpha = 0f
-        percentText.alpha = 0f
-        
-        glowLine.alpha = 0f
         glowLine.scaleX = 0f
 
-        // تشغيل الخلفية السلكية كما في الكود الأصلي الأول
+        // تشغيل الخلفية السلكية كما في الكود الأصلي
         wireframeBg.fadeIn()
 
         // اللوجو - Neon flash entrance
@@ -101,9 +98,7 @@ class SplashActivity : AppCompatActivity() {
 
         // الخط النيون
         ObjectAnimator.ofFloat(glowLine, "alpha", 0f, 1f).apply {
-            duration = 400
-            startDelay = 900
-            start()
+            duration = 400; startDelay = 900; start()
         }
         ObjectAnimator.ofFloat(glowLine, "scaleX", 0f, 1f).apply {
             duration = 500
@@ -157,7 +152,7 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً بشكل منفصل وآمن
+        // Neon pulse على شريط التحميل ونص النسبة المئوية معاً
         ValueAnimator.ofFloat(0.7f, 1f).apply {
             duration = 800
             repeatCount = ValueAnimator.INFINITE
@@ -171,7 +166,7 @@ class SplashActivity : AppCompatActivity() {
             start()
         }
 
-        // انتقال إلى الـ MainActivity بعد 5 ثواني
+        // انتقل للـ MainActivity بعد انتهاء المهلة (5 ثواني) مع تأثير الإخفاء التدريجي للـ Root View
         Handler(Looper.getMainLooper()).postDelayed({
             val rootView = findViewById<View>(android.R.id.content)
             ObjectAnimator.ofFloat(rootView, "alpha", 1f, 0f).apply {
